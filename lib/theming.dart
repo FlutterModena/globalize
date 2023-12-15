@@ -45,23 +45,23 @@ ThemeData appTheme(BuildContext context) => ThemeData(
       buttonTheme: const ButtonThemeData(),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w700,
           fontSize: 48,
         ),
         headlineMedium: TextStyle(
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w500,
           fontSize: 24,
         ),
         bodyMedium: TextStyle(
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w300,
           fontSize: 16,
         ),
         labelSmall: TextStyle(
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w300,
           fontSize: 12,
         ),
         labelMedium: TextStyle(
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w300,
           fontSize: 14,
         ),
       ),
