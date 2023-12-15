@@ -14,12 +14,35 @@ const typoOnColor = Color(0xFF272D38);
 ThemeData appTheme(BuildContext context) => ThemeData(
       fontFamily: 'DM Sans',
       scaffoldBackgroundColor: bg_1,
-      inputDecorationTheme: const InputDecorationTheme(
+      dropdownMenuTheme: const DropdownMenuThemeData(
+        textStyle: TextStyle(
+          fontSize: 16,
+          color: typoMain,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          labelStyle: TextStyle(
+            fontSize: 16,
+            color: typoMain,
+          ),
+          hintStyle: TextStyle(
+            fontSize: 16,
+            color: typoMain,
+          ),
+          contentPadding: EdgeInsets.all(10.0),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: typoMain, width: 2),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
         hoverColor: Colors.transparent,
         suffixIconColor: typoMain,
         prefixIconColor: typoMain,
+        fillColor: bg_3,
         border: InputBorder.none,
+        contentPadding: const EdgeInsets.all(24),
       ),
+      buttonTheme: const ButtonThemeData(),
       textTheme: const TextTheme(
         headlineLarge: TextStyle(
           fontWeight: FontWeight.bold,
