@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:globalize/chip.dart';
 import 'package:globalize/icons.dart';
+import 'package:globalize/languages.dart';
+import 'package:globalize/no_project.dart';
 import 'package:globalize/theming.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -32,12 +36,15 @@ class Entrypoint extends StatefulWidget {
 class _EntrypointState extends State<Entrypoint> {
   var route = -1;
   var isProjectLoaded = false;
-  List<PlatformFile> files = [];
+  var projectName = "";
+  Directory? currentProjectDirectory;
 
-  void _setProject(FilePickerResult res) {
+  void _setProject(String res) {
     setState(() {
-      files = res.files;
+      projectName = res;
+      currentProjectDirectory = Directory(res);
       isProjectLoaded = true;
+      route = 1;
     });
   }
 
@@ -115,14 +122,9 @@ class _EntrypointState extends State<Entrypoint> {
                         ),
                         CustomChip(
                           onTap: () async {
-                            print("picking...");
                             final pickResult =
-                                await FilePicker.platform.pickFiles(
-                              allowMultiple: false,
-                            );
+                                await FilePicker.platform.getDirectoryPath();
                             setState(() {
-                              route = 2;
-                              print(pickResult);
                               if (pickResult == null) return;
 
                               _setProject(pickResult);
@@ -151,7 +153,9 @@ class _EntrypointState extends State<Entrypoint> {
                           height: 12,
                         ),
                         Text(
-                          "Nessun progetto selezionato",
+                          isProjectLoaded
+                              ? projectName
+                              : "Nessun progetto selezionato",
                           style: theme.textTheme.bodyMedium!.copyWith(
                             color: typoSecondary,
                           ),
@@ -162,6 +166,11 @@ class _EntrypointState extends State<Entrypoint> {
                 ),
               ),
             ),
+            route == -1
+                ? const NoProjectView()
+                : route == 1
+                    ? const LanguagesView()
+                    : const Placeholder()
           ],
         ),
       ),
