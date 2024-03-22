@@ -2,14 +2,15 @@ import 'dart:io';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:globalize/app_state.dart';
-import 'package:globalize/chip.dart';
+import 'package:globalize/ui/chip.dart';
 import 'package:globalize/icons.dart';
-import 'package:globalize/languages.dart';
-import 'package:globalize/no_project.dart';
+import 'package:globalize/ui/languages.dart';
+import 'package:globalize/ui/no_project.dart';
 import 'package:globalize/theming.dart';
 import 'package:flutter/material.dart';
-import 'package:globalize/translations.dart';
+import 'package:globalize/ui/translations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 void main() {
   runApp(ChangeNotifierProvider(
@@ -25,10 +26,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Globalize',
-      theme: appTheme(context),
-      home: const Entrypoint(),
-    );
+        title: 'Globalize',
+        theme: appTheme(context),
+        home: const Entrypoint(),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales);
   }
 }
 
@@ -108,7 +110,7 @@ class _EntrypointState extends State<Entrypoint> {
                                 });
                               },
                               icon: CustomIcons.translate,
-                              text: "Traduzioni",
+                              text: AppLocalizations.of(context)!.translations,
                               selected: route == 0,
                             ),
                             const SizedBox(

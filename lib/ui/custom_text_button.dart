@@ -7,6 +7,7 @@ class CustomTextButton extends StatelessWidget {
   final bool iconOnly;
   final String? text;
   final Color? iconColor;
+  final bool dark;
   final VoidCallback onPressed;
   const CustomTextButton({
     super.key,
@@ -14,6 +15,7 @@ class CustomTextButton extends StatelessWidget {
     required this.iconOnly,
     required this.onPressed,
     this.iconColor,
+    this.dark = false,
     this.text,
   });
 
@@ -27,7 +29,7 @@ class CustomTextButton extends StatelessWidget {
 
     return TextButton(
       style: TextButton.styleFrom(
-        backgroundColor: bg_2,
+        backgroundColor: dark ? bg_4 : bg_2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),
         ),

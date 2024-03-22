@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:globalize/app_state.dart';
-import 'package:globalize/custom_text_button.dart';
-import 'package:globalize/ext.dart';
+import 'package:globalize/ui/custom_text_button.dart';
+import 'package:globalize/util/ext.dart';
 import 'package:globalize/icons.dart';
-import 'package:globalize/list_element.dart';
+import 'package:globalize/ui/list_element.dart';
 import 'package:globalize/theming.dart';
 import 'package:provider/provider.dart';
 
@@ -19,15 +19,10 @@ class LanguagesView extends StatefulWidget {
 class _LanguagesViewState extends State<LanguagesView> {
   late Future<List<FileSystemEntity>> currentDir;
 
-  Future<void> _writeNewLanguageFile(String path) async {
-    final file = File(path);
-    await file.create();
-  }
-
   Future<void> _buildDialog(BuildContext context) {
     final theme = Theme.of(context);
     final languageController = TextEditingController();
-    final state = Provider.of<AppState>(context, listen: false);
+    final state = context.read<AppState>();
 
     return showDialog<void>(
       context: context,
@@ -63,9 +58,8 @@ class _LanguagesViewState extends State<LanguagesView> {
               style: theme.textTheme.labelMedium,
             ),
             onPressed: () async {
-              await _writeNewLanguageFile(
-                  "${state.projectDirectory!.path}/${languageController.text.extractFilename()}");
-              await state.reloadProjectDirectory();
+              await state
+                  .addLanguage("${languageController.text.extractFilename()}");
               if (mounted) {
                 Navigator.of(context).pop();
               }
@@ -136,7 +130,9 @@ class _LanguagesViewState extends State<LanguagesView> {
                                 ListElement(
                                   text: lang,
                                   onDelete: () {
-                                    print("delete!");
+                                    setState(() {
+                                      state.deleteLanguage(lang.split(" ")[0]);
+                                    });
                                   },
                                 ),
                                 const SizedBox(

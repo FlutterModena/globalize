@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:globalize/app_state.dart';
-import 'package:globalize/custom_text_button.dart';
+import 'package:globalize/models.dart';
+import 'package:globalize/ui/custom_text_button.dart';
 import 'package:globalize/icons.dart';
-import 'package:globalize/list_element.dart';
+import 'package:globalize/ui/list_element.dart';
 import 'package:globalize/theming.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class TranslationsView extends StatefulWidget {
   const TranslationsView({super.key});
@@ -14,63 +17,102 @@ class TranslationsView extends StatefulWidget {
 }
 
 class _TranslationsViewState extends State<TranslationsView> {
-  final Set<String> keys = <String>{};
-  var langFrom = "N/A", langTo = "N/A";
+  late Map<String, List<TranslationKey>> keys;
+  late List<String> languages;
+  late AppState state;
+  int _selectedIndex = 0;
+  var _langFrom = "N/A", _langTo = "N/A";
+  var textFrom = TextEditingController(), textTo = TextEditingController();
+  bool initializedTextFields = false;
 
-  Future<void> _buildDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    final keyNameController = TextEditingController();
+  int get selectedIndex => _selectedIndex;
 
-    return showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "Aggiungi nuova chiave",
-          style: theme.textTheme.headlineMedium,
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: keyNameController,
-              decoration: const InputDecoration(
-                hintText: "Nome chiave",
-              ),
-            ),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text(
-              "Annulla",
-              style: theme.textTheme.labelMedium,
-            ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: Text(
-              "Aggiungi",
-              style: theme.textTheme.labelMedium,
-            ),
-            onPressed: () async {
-              setState(() {
-                keys.add(keyNameController.text);
-              });
-              if (mounted) {
-                Navigator.of(context).pop();
-              }
-            },
-          ),
-        ],
-      ),
+  set selectedIndex(int n) {
+    _selectedIndex = n;
+    initTextFields();
+  }
+
+  set langFrom(String n) {
+    _langFrom = n;
+    initTextFields();
+  }
+
+  set langTo(String n) {
+    _langTo = n;
+    initTextFields();
+  }
+
+  String get langFrom => _langFrom;
+  String get langTo => _langTo;
+
+  String get langFromShort => langFrom.split(" ")[0];
+  String get langToShort => langTo.split(" ")[0];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    state = context.watch<AppState>();
+    keys = state.keys;
+    languages = state.languages;
+  }
+
+  void textListener(String lang, TextEditingController controller) {
+    if (!initializedTextFields) return;
+
+    if (keys[lang] == null) return;
+    state.editKey(
+      lang: lang,
+      key: keys[lang]![selectedIndex].name,
+      newValue: controller.text,
     );
+  }
+
+  void textFromListener() {
+    textListener(langFromShort, textFrom);
+  }
+
+  void textToListener() {
+    textListener(langToShort, textTo);
+  }
+
+  void initTextFields() {
+    if (keys[langFromShort] != null) {
+      textFrom.text = keys[langFromShort]![selectedIndex].value;
+    }
+    if (keys[langToShort] != null) {
+      textTo.text = keys[langToShort]![selectedIndex].value;
+    }
+    initializedTextFields = true;
+  }
+
+  @override
+  void initState() {
+    //TODO:initialize text
+    super.initState();
+
+    textFrom.addListener(textFromListener);
+    textTo.addListener(textToListener);
+  }
+
+  Future<void> _buildDialog(BuildContext context) async {
+    final theme = Theme.of(context);
+
+    var newKey = await showDialog<TranslationKey>(
+      context: context,
+      builder: (context) => AddKeyDialog(theme: theme, mounted: mounted),
+    );
+    if (newKey != null) {
+      setState(() {
+        state.addKey(newKey);
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Expanded(
       child: SizedBox.expand(
         child: SingleChildScrollView(
@@ -82,7 +124,7 @@ class _TranslationsViewState extends State<TranslationsView> {
               mainAxisSize: MainAxisSize.max,
               children: [
                 Text(
-                  "Traduzioni",
+                  AppLocalizations.of(context)!.translations,
                   style: theme.textTheme.headlineLarge!.copyWith(
                     color: typoMain,
                   ),
@@ -179,21 +221,37 @@ class _TranslationsViewState extends State<TranslationsView> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.max,
-                                children: keys
-                                    .map(
-                                      (k) => Column(
-                                        children: [
-                                          ListElement(
-                                            text: k,
-                                            onDelete: () {},
+                                children: keys.entries.isEmpty
+                                    ? []
+                                    : keys.entries.first.value
+                                        .asMap()
+                                        .entries
+                                        .map(
+                                          (entry) => Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    selectedIndex = entry.key;
+                                                  });
+                                                },
+                                                child:
+                                                    TranslationKeyListElement(
+                                                  translationKey: entry.value,
+                                                  selected: selectedIndex ==
+                                                      entry.key,
+                                                  onDelete: () {
+                                                    state.deleteKey(entry.key);
+                                                  },
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 12,
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(
-                                            height: 12,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                    .toList(),
+                                        )
+                                        .toList(),
                               ),
                             ),
                           ),
@@ -223,6 +281,7 @@ class _TranslationsViewState extends State<TranslationsView> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: TextFormField(
+                                      controller: textFrom,
                                       style:
                                           theme.textTheme.bodyMedium!.copyWith(
                                         color: typoMain,
@@ -252,6 +311,7 @@ class _TranslationsViewState extends State<TranslationsView> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: TextFormField(
+                                      controller: textTo,
                                       style:
                                           theme.textTheme.bodyMedium!.copyWith(
                                         color: typoMain,
@@ -274,6 +334,111 @@ class _TranslationsViewState extends State<TranslationsView> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class AddKeyDialog extends StatefulWidget {
+  const AddKeyDialog({
+    super.key,
+    required this.theme,
+    required this.mounted,
+  });
+
+  final ThemeData theme;
+  final bool mounted;
+
+  @override
+  State<AddKeyDialog> createState() => _AddKeyDialogState();
+}
+
+class _AddKeyDialogState extends State<AddKeyDialog> {
+  var keyNameController = TextEditingController();
+  var descriptionController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(5.0),
+      ),
+      title: Text(
+        "Aggiungi chiave",
+        style: widget.theme.textTheme.headlineMedium,
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [],
+          ),
+          _getGeneralInfo(),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          child: Text(
+            "Annulla",
+            style: widget.theme.textTheme.labelMedium,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        TextButton(
+          child: Text(
+            "Aggiungi",
+            style: widget.theme.textTheme.labelMedium,
+          ),
+          onPressed: () async {
+            if (widget.mounted) {
+              Navigator.of(context).pop(TranslationKey(
+                  name: keyNameController.text,
+                  description: descriptionController.text,
+                  variables: []));
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _getGeneralInfo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextFormField(
+          controller: keyNameController,
+          decoration: const InputDecoration(
+            hintText: "Nome chiave",
+          ),
+        ),
+        TextFormField(
+          controller: descriptionController,
+          decoration: const InputDecoration(
+            hintText: "Descrizione della chiave generica",
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _getAdvancedInfo() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextFormField(
+          controller: keyNameController,
+          decoration: const InputDecoration(
+            hintText: "Nome chiave",
+          ),
+        ),
+        TextFormField(
+          controller: descriptionController,
+          decoration: const InputDecoration(
+            hintText: "Descrizione della chiave generica",
+          ),
+        ),
+      ],
     );
   }
 }
