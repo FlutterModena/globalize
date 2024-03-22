@@ -52,6 +52,9 @@ class AppState extends ChangeNotifier {
   void deleteLanguage(String lang) {
     languages.remove(lang);
     keys.remove(lang);
+    final file = File("${projectDirectory!.path}/${lang.extractFilename()}");
+
+    file.delete();
     saveKeys();
     notifyListeners();
   }
@@ -63,7 +66,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> loadLanguages() async {
     projectFiles = await projectDirectory!.list().toList();
-    for (var file in projectFiles) {
+    languages.clear();
+
+    for (var file
+        in projectFiles.where((element) => element.path.endsWith(".arb"))) {
       final filename = basename(file.path);
       final langName = filename.extractLanguage();
       if (langName != null) {
@@ -130,7 +136,6 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> setProjectDirectory(String dir) async {
-    formattedLanguages.clear();
     _currentProjectDirectory = Directory(dir);
     await loadLanguages();
     await loadKeys();
